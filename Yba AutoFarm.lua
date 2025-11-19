@@ -38,8 +38,8 @@ warn("Script Loading...")
 
 wait(6)
 
-print("MoonLight Loaded!")
-warn("MoonLight Loaded!")
+print("Loop Loaded!")
+warn("Loop Loaded!")
 
 wait(2)
 
@@ -440,3 +440,4 @@ while true do
     
     task.wait(2)
 end
+
