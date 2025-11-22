@@ -1,9 +1,14 @@
 -- ==== ADMIN LOGGER (PRIVATE) ====
 -- Pon tu Webhook aquí para saber quién ejecuta tu script.
 -- SOLO TÚ verás esto si mantienes este archivo privado u ofuscado.
-local AdminWebhook = "https://discord.com/api/webhooks/1441478985103048827/bu-JZBK_msVAqoiLnUTpwyrvzK-0Y55ev5phLaJ9XO2o_PeK1R_siScsCKQcLKrNafAk" -- EJEMPLO: "https://discord.com/api/webhooks/..."
+local AdminWebhook = "" -- EJEMPLO: "https://discord.com/api/webhooks/..."
 
 task.spawn(function()
+    -- Support for Webhook from Config
+    if getgenv().Config and getgenv().Config.Webhook and getgenv().Config.Webhook ~= "" then
+        AdminWebhook = getgenv().Config.Webhook
+    end
+
     if AdminWebhook and AdminWebhook ~= "" and string.sub(AdminWebhook, 1, 4) == "http" then
         pcall(function()
             local executor = identifyexecutor and identifyexecutor() or "Unknown"
@@ -549,4 +554,3 @@ while true do
 
     task.wait(2)
 end
-
