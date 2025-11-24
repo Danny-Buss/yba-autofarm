@@ -1,28 +1,3 @@
--- [[ YBA AUTO FARM CONFIGURATION ]] --
-if not getgenv().Config then
-    getgenv().Config = {
-        -- Webhook URL for notifications (Discord)
-        -- Leave empty "" if you don't want notifications
-        Webhook = "", 
-        
-        -- Auto Buy Lucky Arrows
-        -- Set to true to automatically buy Lucky Arrows when money is sufficient
-        BuyLucky = true,
-        
-        -- Auto Sell Items
-        -- Set to true to automatically sell items defined in the script
-        AutoSell = true,
-        
-        -- Max Money Alert
-        -- The script will send a webhook notification when this amount is reached
-        MaxMoneyAlert = 1000000,
-        
-        -- Safe Mode
-        -- Set to true for better stability on multiple accounts (reduces graphics, slower actions)
-        SafeMode = true
-    }
-end
-
 -- ==== INTERNAL AUTO-RESOLVING CONFIG ACCESSORS ====
 local function IsBuyLucky()
     if getgenv and getgenv().Config and getgenv().Config.BuyLucky ~= nil then
@@ -149,15 +124,16 @@ do
             local alpha = i/steps
             txt.TextTransparency = alpha
             txt.BackgroundTransparency = 0.13 + 0.87 * alpha
+            txt.TextStrokeTransparency = 0.4 + 0.6 * alpha
             wait(totalTime/steps)
         end
         sg:Destroy()
     end)
 end
 
--- OPTIMIZED DELAYS (faster but safe from anti-cheat)
-local ActionDelay = SafeMode and 0.4 or 0.1  -- Reduced from 0.5 to 0.4
-local TeleportDelay = SafeMode and 0.6 or 0.25  -- Reduced from 0.8 to 0.6
+-- OPTIMIZED DELAYS FOR SAFE MODE (faster but safe)
+local ActionDelay = SafeMode and 0.35 or 0.1  -- Optimized: 0.5 -> 0.35
+local TeleportDelay = SafeMode and 0.7 or 0.5  -- Optimized: 1.0 -> 0.7
 
 wait(6)
 print("Loop Loaded!")
@@ -479,7 +455,7 @@ end
 while true do
     task.wait(0.1) -- Prevent CPU lockup
     print("=== Cycle #" .. (cyclesCompleted + 1) .. " ===")
-    -- Farmear items (OPTIMIZED: faster teleport and interaction delays)
+    -- Farmear items (NO TOCAR)
     for Index, ItemInfo in pairs(getgenv().SpawnedItems) do
         local HumanoidRootPart = GetCharacter("HumanoidRootPart")
         if HumanoidRootPart then
@@ -494,17 +470,17 @@ while true do
                 BodyVelocity.Velocity = Vector3.new(0, 0, 0)
                 ToggleNoclip(true)
                 TeleportTo(CFrame.new(Position.X, Position.Y + 25, Position.Z))
-                task.wait(TeleportDelay) -- OPTIMIZED: 0.6s instead of 0.8s
+                task.wait(TeleportDelay)
 
                 if fireproximityprompt then
                     fireproximityprompt(ProximityPrompt)
                 else
                     ProximityPrompt:InputHoldBegin()
-                    task.wait(ProximityPrompt.HoldDuration or 0.3)
+                    task.wait(ProximityPrompt.HoldDuration or 0.5)
                     ProximityPrompt:InputHoldEnd()
                 end
 
-                task.wait(0.4) -- OPTIMIZED: 0.4s instead of 0.5s
+                task.wait(TeleportDelay)
                 BodyVelocity:Destroy()
                 TeleportTo(CFrame.new(978, -42, -49))
             else
@@ -525,30 +501,24 @@ while true do
         print("🎉 Alert: Target money reached!")
     end
 
-    -- Sell items (OPTIMIZED: faster selling with reduced delay)
+    -- Sell items (reads user config live)
     if IsAutoSell() then
-        local Character = GetCharacter()
-        local Humanoid = Character and Character:FindFirstChild("Humanoid")
-        local RemoteEvent = Character and Character:FindFirstChild("RemoteEvent")
-
-        if Humanoid and RemoteEvent then
-            for _, Tool in pairs(Player.Backpack:GetChildren()) do
-                if SellItems[Tool.Name] then
-                    pcall(function()
-                        Humanoid:EquipTool(Tool)
-                        RemoteEvent:FireServer("EndDialogue", {
-                            ["NPC"] = "Merchant",
-                            ["Dialogue"] = "Dialogue5",
-                            ["Option"] = "Option2"
-                        })
-                    end)
-                    task.wait(ActionDelay) -- OPTIMIZED: 0.4s instead of 0.5s
-                end
+        for Item, Sell in pairs(SellItems) do
+            if Sell and Player.Backpack and Player.Backpack:FindFirstChild(Item) then
+                pcall(function()
+                    GetCharacter("Humanoid"):EquipTool(Player.Backpack:FindFirstChild(Item))
+                    GetCharacter("RemoteEvent"):FireServer("EndDialogue", {
+                        ["NPC"] = "Merchant",
+                        ["Dialogue"] = "Dialogue5",
+                        ["Option"] = "Option2"
+                    })
+                end)
+                task.wait(ActionDelay)
             end
         end
     end
 
-    -- Buy Lucky Arrows (OPTIMIZED: faster purchasing)
+    -- Buy Lucky Arrows (reads user config live) - OPTIMIZED
     if IsBuyLucky() and not HasLuckyArrows() then
         print("Buying Lucky Arrows... (Money: $" .. Money.Value .. ")")
         local purchaseAttempts = 0
@@ -556,7 +526,7 @@ while true do
             pcall(function()
                 Player.Character.RemoteEvent:FireServer("PurchaseShopItem", {["ItemName"] = "1x Lucky Arrow"})
             end)
-            task.wait(0.4) -- OPTIMIZED: 0.4s instead of 0.5s
+            task.wait(0.7) -- OPTIMIZED: 1.0 -> 0.7
             purchaseAttempts = purchaseAttempts + 1
 
             local currentCount = 0
