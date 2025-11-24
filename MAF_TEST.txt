@@ -133,15 +133,14 @@ do
             local alpha = i/steps
             txt.TextTransparency = alpha
             txt.BackgroundTransparency = 0.13 + 0.87 * alpha
-            txt.TextStrokeTransparency = 0.4 + 0.6 * alpha
             wait(totalTime/steps)
         end
         sg:Destroy()
     end)
 end
 
-local ActionDelay = SafeMode and 0.25 or 0.1
-local TeleportDelay = SafeMode and 0.5 or 0.25
+local ActionDelay = SafeMode and 0.5 or 0.1
+local TeleportDelay = SafeMode and 0.8 or 0.25
 
 wait(6)
 print("Loop Loaded!")
@@ -488,7 +487,7 @@ while true do
                     ProximityPrompt:InputHoldEnd()
                 end
 
-                task.wait(0.2)
+                task.wait(0.5)
                 BodyVelocity:Destroy()
                 TeleportTo(CFrame.new(978, -42, -49))
             else
