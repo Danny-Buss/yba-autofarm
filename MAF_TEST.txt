@@ -4,19 +4,118 @@ if not getgenv().Config then
         -- Webhook URL for notifications (Discord)
         -- Leave empty "" if you don't want notifications
         Webhook = "", 
-
+        
         -- Auto Buy Lucky Arrows
         -- Set to true to automatically buy Lucky Arrows when money is sufficient
         BuyLucky = true,
-
+        
         -- Auto Sell Items
         -- Set to true to automatically sell items defined in the script
         AutoSell = true,
-
+        
         -- Max Money Alert
         -- The script will send a webhook notification when this amount is reached
         MaxMoneyAlert = 1000000,
+        
+        -- Safe Mode
+        -- Set to true for better stability on multiple accounts (reduces graphics, slower actions)
+        SafeMode = true
+    }
+end
 
+-- ==== INTERNAL AUTO-RESOLVING CONFIG ACCESSORS ====
+local function IsBuyLucky()
+    if getgenv and getgenv().Config and getgenv().Config.BuyLucky ~= nil then
+        return getgenv().Config.BuyLucky
+    end
+    return true
+end
+local function IsAutoSell()
+    if getgenv and getgenv().Config and getgenv().Config.AutoSell ~= nil then
+        return getgenv().Config.AutoSell
+    end
+    return true
+end
+local function GetWebhookURL()
+    return (getgenv and getgenv().Config and getgenv().Config.Webhook ~= nil)
+        and getgenv().Config.Webhook or ""
+end
+local function GetMaxMoneyAlert()
+    return (getgenv and getgenv().Config and getgenv().Config.MaxMoneyAlert ~= nil)
+        and getgenv().Config.MaxMoneyAlert or 1000000
+end
+
+-- ==== SAFE MODE & OPTIMIZATION ====
+local SafeMode = true -- Set to true for multi-account stability
+if getgenv and getgenv().Config and getgenv().Config.SafeMode ~= nil then
+    SafeMode = getgenv().Config.SafeMode
+end
+
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
+if SafeMode then
+    -- Low performance mode for multi-accounts
+    pcall(function()
+        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+        game:GetService("RunService"):Set3dRenderingEnabled(false) -- Saves GPU
+        setfpscap(30) -- Saves CPU
+
+        -- BLACK SCREEN OVERLAY (instead of white)
+        local PlayerGui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui") or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+        local BlackScreen = Instance.new("ScreenGui")
+        BlackScreen.Name = "BlackScreenOverlay"
+        BlackScreen.IgnoreGuiInset = true
+        BlackScreen.Parent = PlayerGui
+        
+        local Frame = Instance.new("Frame")
+        Frame.Size = UDim2.new(1, 0, 1, 0)
+        Frame.BackgroundColor3 = Color3.new(0, 0, 0) -- BLACK background
+        Frame.BorderSizePixel = 0
+        Frame.Parent = BlackScreen
+        
+        -- Keep UI on top but behind essential notifications
+        BlackScreen.DisplayOrder = -1 
+    end)
+end
+
+-- Sistema de Banlist Remota
+local BanlistURL = "https://raw.githubusercontent.com/rorri-cm/yba-autofarm/refs/heads/main/banlist.txt"
+local Player = game:GetService("Players").LocalPlayer
+
+local function CheckBanlist()
+    local success, banlist = pcall(function()
+        return game:HttpGet(BanlistURL)
+    end)
+    if success and banlist then
+        for bannedUser in banlist:gmatch("[^\r\n]+") do
+            if bannedUser:lower() == Player.Name:lower() then
+                Player:Kick("❌ You have been kicked from the script by the administrator.")
+                return true
+            end
+        end
+    end
+    return false
+end
+
+if CheckBanlist() then
+    return
+end
+
+task.spawn(function()
+    while true do
+        task.wait(30)
+        CheckBanlist()
+    end
+end)
+
+print("Script Loading...")
+warn("Script Loading...")
+
+-- NOTIFICATION ON SCREEN: "Loop loaded successfully, enjoy!"
+do
+    local PlayerGui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui") or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
     local sg = Instance.new("ScreenGui")
     sg.IgnoreGuiInset = true
     sg.Name = "Loop_Notification"
@@ -56,8 +155,9 @@ if not getgenv().Config then
     end)
 end
 
-local ActionDelay = SafeMode and 0.5 or 0.1
-local TeleportDelay = SafeMode and 0.8 or 0.25
+-- OPTIMIZED DELAYS (faster but safe from anti-cheat)
+local ActionDelay = SafeMode and 0.4 or 0.1  -- Reduced from 0.5 to 0.4
+local TeleportDelay = SafeMode and 0.6 or 0.25  -- Reduced from 0.8 to 0.6
 
 wait(6)
 print("Loop Loaded!")
@@ -379,7 +479,7 @@ end
 while true do
     task.wait(0.1) -- Prevent CPU lockup
     print("=== Cycle #" .. (cyclesCompleted + 1) .. " ===")
-    -- Farmear items (NO TOCAR)
+    -- Farmear items (OPTIMIZED: faster teleport and interaction delays)
     for Index, ItemInfo in pairs(getgenv().SpawnedItems) do
         local HumanoidRootPart = GetCharacter("HumanoidRootPart")
         if HumanoidRootPart then
@@ -394,7 +494,7 @@ while true do
                 BodyVelocity.Velocity = Vector3.new(0, 0, 0)
                 ToggleNoclip(true)
                 TeleportTo(CFrame.new(Position.X, Position.Y + 25, Position.Z))
-                task.wait(TeleportDelay)
+                task.wait(TeleportDelay) -- OPTIMIZED: 0.6s instead of 0.8s
 
                 if fireproximityprompt then
                     fireproximityprompt(ProximityPrompt)
@@ -404,7 +504,7 @@ while true do
                     ProximityPrompt:InputHoldEnd()
                 end
 
-                task.wait(0.5)
+                task.wait(0.4) -- OPTIMIZED: 0.4s instead of 0.5s
                 BodyVelocity:Destroy()
                 TeleportTo(CFrame.new(978, -42, -49))
             else
@@ -425,8 +525,7 @@ while true do
         print("🎉 Alert: Target money reached!")
     end
 
-    -- Sell items (reads user config live)
-    -- Sell items (Optimized: Sells EVERYTHING in one go)
+    -- Sell items (OPTIMIZED: faster selling with reduced delay)
     if IsAutoSell() then
         local Character = GetCharacter()
         local Humanoid = Character and Character:FindFirstChild("Humanoid")
@@ -443,13 +542,13 @@ while true do
                             ["Option"] = "Option2"
                         })
                     end)
-                    task.wait(ActionDelay)
+                    task.wait(ActionDelay) -- OPTIMIZED: 0.4s instead of 0.5s
                 end
             end
         end
     end
 
-    -- Buy Lucky Arrows (reads user config live)
+    -- Buy Lucky Arrows (OPTIMIZED: faster purchasing)
     if IsBuyLucky() and not HasLuckyArrows() then
         print("Buying Lucky Arrows... (Money: $" .. Money.Value .. ")")
         local purchaseAttempts = 0
@@ -457,7 +556,7 @@ while true do
             pcall(function()
                 Player.Character.RemoteEvent:FireServer("PurchaseShopItem", {["ItemName"] = "1x Lucky Arrow"})
             end)
-            task.wait(0.5)
+            task.wait(0.4) -- OPTIMIZED: 0.4s instead of 0.5s
             purchaseAttempts = purchaseAttempts + 1
 
             local currentCount = 0
