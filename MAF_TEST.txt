@@ -49,24 +49,6 @@ end
 local SafeMode = true -- Set to true for multi-account stability
 if getgenv and getgenv().Config and getgenv().Config.SafeMode ~= nil then
     SafeMode = getgenv().Config.SafeMode
-end
-
-if not game:IsLoaded() then
-    game.Loaded:Wait()
-end
-
-if SafeMode then
-    -- Low performance mode for multi-accounts
-    pcall(function()
-        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
-        game:GetService("RunService"):Set3dRenderingEnabled(false) -- Saves GPU
-        setfpscap(30) -- Saves CPU
-    end)
-end
-
--- Sistema de Banlist Remota
-local BanlistURL = "https://raw.githubusercontent.com/rorri-cm/yba-autofarm/refs/heads/main/banlist.txt"
-local Player = game:GetService("Players").LocalPlayer
 
 local function CheckBanlist()
     local success, banlist = pcall(function()
