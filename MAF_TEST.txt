@@ -166,16 +166,79 @@ local MarketplaceService = game:GetService("MarketplaceService")
 
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
+-- ==== AUTO-REJOIN SYSTEM (Enhanced) ====
+-- Detects ANY kick/disconnect and automatically rejoins
+local TeleportService = game:GetService("TeleportService")
+local PlaceId = game.PlaceId
+
+-- Method 1: CoreGui Error Prompt Detection (original)
 game:GetService("CoreGui").DescendantAdded:Connect(function(child)
     if child.Name == "ErrorPrompt" then
-        local GrabError = child:FindFirstChild("ErrorMessage",true)
-        repeat task.wait() until GrabError.Text ~= "Label"
-        local Reason = GrabError.Text
-        if Reason:match("kick") or Reason:match("You") or Reason:match("conn") or Reason:match("rejoin") then
-            game:GetService("TeleportService"):Teleport(2809202155, game:GetService("Players").LocalPlayer)
+        local GrabError = child:FindFirstChild("ErrorMessage", true)
+        if GrabError then
+            repeat task.wait() until GrabError.Text ~= "Label"
+            local Reason = GrabError.Text
+            print("⚠️ Kick detected: " .. Reason)
+            print("🔄 Auto-rejoining in 2 seconds...")
+            task.wait(2)
+            TeleportService:Teleport(PlaceId, Player)
         end
     end
 end)
+
+-- Method 2: Player.Kick detection (catches manual kicks)
+if hookmetamethod then
+    pcall(function()
+        local oldKick
+        oldKick = hookmetamethod(game, "__namecall", function(self, ...)
+            local method = getnamecallmethod()
+            local args = {...}
+            
+            if method == "Kick" and self == Player then
+                local reason = args[1] or "Unknown reason"
+                print("⚠️ Kick detected via Kick(): " .. tostring(reason))
+                
+                -- Don't rejoin if it's the banlist kick
+                if not tostring(reason):match("administrator") then
+                    print("🔄 Auto-rejoining in 2 seconds...")
+                    task.wait(2)
+                    TeleportService:Teleport(PlaceId, Player)
+                end
+                
+                return -- Prevent the actual kick from showing
+            end
+            
+            return oldKick(self, ...)
+        end)
+    end)
+end
+
+-- Method 3: Connection lost detection
+pcall(function()
+    game:GetService("GuiService").ErrorMessageChanged:Connect(function()
+        local errorMessage = game:GetService("GuiService"):GetErrorMessage()
+        if errorMessage and errorMessage ~= "" then
+            print("⚠️ Connection error detected: " .. errorMessage)
+            print("🔄 Auto-rejoining in 2 seconds...")
+            task.wait(2)
+            TeleportService:Teleport(PlaceId, Player)
+        end
+    end)
+end)
+
+-- Method 4: Teleport failed detection (backup)
+TeleportService.TeleportInitFailed:Connect(function(player, teleportResult, errorMessage)
+    if player == Player then
+        warn("⚠️ Teleport failed: " .. tostring(errorMessage))
+        print("🔄 Retrying teleport in 3 seconds...")
+        task.wait(3)
+        TeleportService:Teleport(PlaceId, Player)
+    end
+end)
+
+print("✅ Auto-Rejoin system loaded (4 detection methods active)")
+
+
 
 local Has2x = false
 pcall(function()
