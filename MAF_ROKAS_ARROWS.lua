@@ -324,7 +324,7 @@ local function GetItemInfo(Model)
     return nil
 end
 
-getgenv().SpawnedItems = {}
+getgenv().SpawnedItems = {} -- ✅ CLEAR: Remove any items from previous executions
 
 if ItemSpawnFolder then
     ItemSpawnFolder.ChildAdded:Connect(function(Model)
@@ -336,6 +336,8 @@ if ItemSpawnFolder then
                 if ItemInfo.Name == "Rokakaka" or ItemInfo.Name == "Mysterious Arrow" then
                     getgenv().SpawnedItems[Model] = ItemInfo
                     print("Detected item: " .. ItemInfo.Name)
+                else
+                    print("Ignored item: " .. ItemInfo.Name .. " (not Roka/Arrow)")
                 end
             end
         end
@@ -343,6 +345,7 @@ if ItemSpawnFolder then
     
     -- ✅ ADDED: Scan for items that already exist in the world
     print("Scanning for existing items...")
+    local foundCount = 0
     for _, Model in pairs(ItemSpawnFolder:GetChildren()) do
         if Model:IsA("Model") then
             local ItemInfo = GetItemInfo(Model)
@@ -351,11 +354,14 @@ if ItemSpawnFolder then
                 if ItemInfo.Name == "Rokakaka" or ItemInfo.Name == "Mysterious Arrow" then
                     getgenv().SpawnedItems[Model] = ItemInfo
                     print("Found existing item: " .. ItemInfo.Name)
+                    foundCount = foundCount + 1
+                else
+                    print("Ignored existing item: " .. ItemInfo.Name .. " (not Roka/Arrow)")
                 end
             end
         end
     end
-    print("Initial scan complete!")
+    print("Initial scan complete! Found " .. foundCount .. " Rokas/Arrows")
 else
     warn("ItemSpawnFolder doesn't exist, items won't be detected automatically")
 end
