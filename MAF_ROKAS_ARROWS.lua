@@ -475,10 +475,17 @@ while true do
             local Name = ItemInfo.Name
             
             -- âœ… FILTRO SIMPLE: Solo farmear Rokas y Arrows
-            if Name ~= "Rokakaka" and Name ~= "Mysterious Arrow" then
-                table.remove(getgenv().SpawnedItems, table.find(getgenv().SpawnedItems, ItemInfo))
-                continue
-            end
+            if Name == "Rokakaka" or Name == "Mysterious Arrow" then
+    local HasMax = HasMaxItem(Name)
+    if not HasMax then
+        -- ... resto del código de farmeo
+    else
+        table.remove(getgenv().SpawnedItems, table.find(getgenv().SpawnedItems, ItemInfo))
+    end
+else
+    -- No es Roka ni Arrow, remover de la lista
+    table.remove(getgenv().SpawnedItems, table.find(getgenv().SpawnedItems, ItemInfo))
+end
             
             local HasMax = HasMaxItem(Name)
             if not HasMax then
@@ -544,3 +551,4 @@ while true do
 
     task.wait(2)
 end
+
