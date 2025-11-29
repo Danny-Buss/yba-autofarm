@@ -478,29 +478,9 @@ while true do
     
     if rokaCount >= 10 and arrowCount >= 10 then
         print("✅ TARGET REACHED! Rokas: " .. rokaCount .. "/10 | Arrows: " .. arrowCount .. "/10")
-        print("⏸️ Waiting for items to be used...")
+        print("🎉 Farming complete! Returning control to main script...")
         SendWebhook("✅ Farming complete! Rokas: " .. rokaCount .. " | Arrows: " .. arrowCount)
-        
-        -- ✅ CHANGED: Wait instead of stopping - monitor inventory
-        while rokaCount >= 10 and arrowCount >= 10 do
-            task.wait(2) -- Check every 2 seconds
-            
-            -- Recount items
-            rokaCount = 0
-            arrowCount = 0
-            for _, Tool in pairs(Player.Backpack:GetChildren()) do
-                if Tool.Name == "Rokakaka" then
-                    rokaCount = rokaCount + 1
-                elseif Tool.Name == "Mysterious Arrow" then
-                    arrowCount = arrowCount + 1
-                end
-            end
-            
-            print("⏸️ Waiting... (Rokas: " .. rokaCount .. "/10 | Arrows: " .. arrowCount .. "/10)")
-        end
-        
-        print("🔄 Items used! Resuming farming...")
-        SendWebhook("🔄 Items below 10, resuming farm...")
+        break -- ✅ Stop and return control to Y_SF_EXPERIMENTAL.lua
     end
     
     print("=== Farming Rokas & Arrows === (Rokas: " .. rokaCount .. "/10 | Arrows: " .. arrowCount .. "/10)")
