@@ -498,35 +498,45 @@ while true do
         local HumanoidRootPart = GetCharacter("HumanoidRootPart")
         if HumanoidRootPart then
             local Name = ItemInfo.Name
-            local HasMax = HasMaxItem(Name)
-            if not HasMax then
-                local ProximityPrompt = ItemInfo.ProximityPrompt
-                local Position = ItemInfo.Position
-                
-                -- Mark for removal (will remove after loop)
+            
+            -- ✅ DOUBLE VERIFICATION: Only process Rokakakas and Mysterious Arrows
+            if Name ~= "Rokakaka" and Name ~= "Mysterious Arrow" then
+                print("⚠️ Skipping invalid item in SpawnedItems: " .. tostring(Name))
                 table.insert(itemsToRemove, Index)
-                
-                local BodyVelocity = Instance.new("BodyVelocity")
-                BodyVelocity.Parent = HumanoidRootPart
-                BodyVelocity.Velocity = Vector3.new(0, 0, 0)
-                ToggleNoclip(true)
-                TeleportTo(CFrame.new(Position.X, Position.Y + 25, Position.Z))
-                task.wait(TeleportDelay)
-
-                if fireproximityprompt then
-                    fireproximityprompt(ProximityPrompt)
-                else
-                    ProximityPrompt:InputHoldBegin()
-                    task.wait(ProximityPrompt.HoldDuration or 0.5)
-                    ProximityPrompt:InputHoldEnd()
-                end
-
-                task.wait(TeleportDelay)
-                BodyVelocity:Destroy()
-                TeleportTo(CFrame.new(978, -42, -49))
             else
-                -- Mark for removal (already have max)
-                table.insert(itemsToRemove, Index)
+                local HasMax = HasMaxItem(Name)
+                if not HasMax then
+                    local ProximityPrompt = ItemInfo.ProximityPrompt
+                    local Position = ItemInfo.Position
+                    
+                    print("📦 Collecting: " .. Name)
+                    
+                    -- Mark for removal (will remove after loop)
+                    table.insert(itemsToRemove, Index)
+                    
+                    local BodyVelocity = Instance.new("BodyVelocity")
+                    BodyVelocity.Parent = HumanoidRootPart
+                    BodyVelocity.Velocity = Vector3.new(0, 0, 0)
+                    ToggleNoclip(true)
+                    TeleportTo(CFrame.new(Position.X, Position.Y + 25, Position.Z))
+                    task.wait(TeleportDelay)
+
+                    if fireproximityprompt then
+                        fireproximityprompt(ProximityPrompt)
+                    else
+                        ProximityPrompt:InputHoldBegin()
+                        task.wait(ProximityPrompt.HoldDuration or 0.5)
+                        ProximityPrompt:InputHoldEnd()
+                    end
+
+                    task.wait(TeleportDelay)
+                    BodyVelocity:Destroy()
+                    TeleportTo(CFrame.new(978, -42, -49))
+                else
+                    -- Mark for removal (already have max)
+                    print("✅ Already have max " .. Name .. ", skipping")
+                    table.insert(itemsToRemove, Index)
+                end
             end
         end
     end
